@@ -150,7 +150,7 @@ Writeback任务主要由两个函数直接完成: `balance_dirty_pages_ratelimit
 `wakeup_flusher_threads` : 一般是间隔性的触发，定时writeback。
 
 ### wakeup_flusher_threads的分析
-**wakeup_flusher_threads函数: ** 遍历当前的bdi_list所有的bdi设备，然后对这些bdi设备执行一次flush的操作。 `reason` 代表writeback触发的原因，大部分情况下是 `WB_REASON_SYNC` 。
+**wakeup_flusher_threads函数:** 遍历当前的bdi_list所有的bdi设备，然后对这些bdi设备执行一次flush的操作。 `reason` 代表writeback触发的原因，大部分情况下是 `WB_REASON_SYNC` 。
 ```c
 enum wb_reason {
 	WB_REASON_BACKGROUND,
@@ -187,7 +187,7 @@ void wakeup_flusher_threads(enum wb_reason reason)
 	rcu_read_unlock();
 }
 ```
-**wakeup_flusher_threads函数: ** 先判断一下是否有dirty的IO，然后遍历 `bdi->wb_list` 下面的 `bdi_writeback` 对象，然后开始进行wb。
+**wakeup_flusher_threads函数:** 先判断一下是否有dirty的IO，然后遍历 `bdi->wb_list` 下面的 `bdi_writeback` 对象，然后开始进行wb。
 ```c
 static void __wakeup_flusher_threads_bdi(struct backing_dev_info *bdi,
 					 enum wb_reason reason)
@@ -205,7 +205,7 @@ static void __wakeup_flusher_threads_bdi(struct backing_dev_info *bdi,
 >1. 怎么样的wb任务是dirty的？
 >2. bdi->wb_list里面是怎么添加的？
 
-**wb_start_writeback函数: ** 先判断保证同一个wb任务，只能必须先等之前的运行完毕，才能执行下一次。最后通过 `wb_wakeup` 函数实现wb。
+**wb_start_writeback函数:** 先判断保证同一个wb任务，只能必须先等之前的运行完毕，才能执行下一次。最后通过 `wb_wakeup` 函数实现wb。
 ```c
 static void wb_start_writeback(struct bdi_writeback *wb, enum wb_reason reason)
 {
@@ -228,7 +228,7 @@ static void wb_start_writeback(struct bdi_writeback *wb, enum wb_reason reason)
 > 问题: 在哪里清除 `WB_start_all` 这个标志?
 > 答案: `wb_do_writeback->wb_check_start_all` 清除标志
 
-**wb_wakeup函数: ** 判断传入的wb任务是否已经register，如果是就执行，如果不是就等待。
+**wb_wakeup函数:** 判断传入的wb任务是否已经register，如果是就执行，如果不是就等待。
 ```c
 static void wb_wakeup(struct bdi_writeback *wb)
 {
@@ -239,7 +239,7 @@ static void wb_wakeup(struct bdi_writeback *wb)
 }
 ```
 
-**wb_workfn函数: ** 遍历work_list所有的wb任务，然后执行wb_do_writeback函数。
+**wb_workfn函数:** 遍历work_list所有的wb任务，然后执行wb_do_writeback函数。
 ```c
 void wb_workfn(struct work_struct *work)
 {
@@ -283,7 +283,7 @@ void wb_workfn(struct work_struct *work)
 }
 ```
 
-**wb_do_writeback函数: ** 遍历work_list所有的wb任务，然后执行 `wb_writeback` 处理主要wb任务。
+**wb_do_writeback函数:** 遍历work_list所有的wb任务，然后执行 `wb_writeback` 处理主要wb任务。
 ```c
 static long wb_do_writeback(struct bdi_writeback *wb)
 {
@@ -321,7 +321,7 @@ static long wb_do_writeback(struct bdi_writeback *wb)
 > 问题1: force wb是怎么触发的
 
 
-**wb_writeback函数: ** writeback机制的核心函数，主要步骤是将dirty inode，expired inode都迁移到一个list里面，然后进行处理。
+**wb_writeback函数:** writeback机制的核心函数，主要步骤是将dirty inode，expired inode都迁移到一个list里面，然后进行处理。
 ```c
 static long wb_writeback(struct bdi_writeback *wb,
 			 struct wb_writeback_work *work)
@@ -419,7 +419,7 @@ static long wb_writeback(struct bdi_writeback *wb,
 	return nr_pages - work->nr_pages; // 表示写了多少个页
 }
 ```
-**writeback_sb_inodes函数: ** 将inode的dirty pages写入到磁盘当中。
+**writeback_sb_inodes函数:** 将inode的dirty pages写入到磁盘当中。
 ```c
 static long writeback_sb_inodes(struct super_block *sb,
 				struct bdi_writeback *wb,
