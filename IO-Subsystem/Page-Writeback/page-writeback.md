@@ -565,3 +565,59 @@ static long writeback_sb_inodes(struct super_block *sb,
 	return wrote;
 }
 ```
+
+**wb_check_old_data_flush函数:** 间隔性地将数据回写到磁盘。
+```c
+static long wb_check_old_data_flush(struct bdi_writeback *wb)
+{
+	unsigned long expired;
+	long nr_pages;
+
+	/*
+	 * When set to zero, disable periodic writeback
+	 */
+	if (!dirty_writeback_interval) // 如果没有设置回写间隔，那就退出
+		return 0;
+
+	expired = wb->last_old_flush +
+			msecs_to_jiffies(dirty_writeback_interval * 10);
+	if (time_before(jiffies, expired)) // 是否已经过期，没有过期就跳出，过期了就写入
+		return 0;
+
+	wb->last_old_flush = jiffies;
+	nr_pages = get_nr_dirty_pages();
+
+	if (nr_pages) {
+		struct wb_writeback_work work = {
+			.nr_pages	= nr_pages,
+			.sync_mode	= WB_SYNC_NONE,
+			.for_kupdate	= 1,
+			.range_cyclic	= 1,
+			.reason		= WB_REASON_PERIODIC,
+		};
+		return wb_writeback(wb, &work); // 调用wb_writeback写入函数
+	}
+
+	return 0;
+}
+```
+
+**wb_check_background_flush函数:** 判断目前缓存的页是否超过了阈值。
+```c
+static long wb_check_background_flush(struct bdi_writeback *wb)
+{
+	if (wb_over_bg_thresh(wb)) { // 判断是否超过了阈值
+
+		struct wb_writeback_work work = {
+			.nr_pages	= LONG_MAX,
+			.sync_mode	= WB_SYNC_NONE,
+			.for_background	= 1,
+			.range_cyclic	= 1,
+			.reason		= WB_REASON_BACKGROUND,
+		};
+
+		return wb_writeback(wb, &work);
+	}
+	return 0;
+}
+```
