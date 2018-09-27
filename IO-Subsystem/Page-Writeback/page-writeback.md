@@ -203,7 +203,9 @@ static void __wakeup_flusher_threads_bdi(struct backing_dev_info *bdi,
 ```
 这里有两个问题:
 >1. 怎么样的wb任务是dirty的？
+>答: bdi_has_dirty_io 函数是根据bdi->tot_write_bandwidth的值去判断是否有dirty的wb的任务，而这个值则是在queue_io函数的时候改变，queue_io函数将需要被清理的inode移动到wb->b_io，同时增加bdi->tot_write_bandwidth的值，因此如果bdi->tot_write_bandwidth不为0，那么表示queue_io函数还需要继续处理，那么表示还有io没有处理完成，即dirty。
 >2. bdi->wb_list里面是怎么添加的？
+>答: 当一个bdi设备初始化的时候，就会将一个bdi_writeback加入到bdi->wb_list中。这个bdi_writeback的任务是调度writeback_work。
 
 **wb_start_writeback函数:** 先判断保证同一个wb任务，只能必须先等之前的运行完毕，才能执行下一次。最后通过 `wb_wakeup` 函数实现wb。
 ```c
@@ -319,6 +321,7 @@ static long wb_do_writeback(struct bdi_writeback *wb)
 }
 ```
 > 问题1: force wb是怎么触发的
+> 答：由用户将work加入到链表，然后进行触发。
 
 
 **wb_writeback函数:** writeback机制的核心函数，主要步骤是将dirty inode，expired inode都迁移到一个list里面，然后进行处理。
